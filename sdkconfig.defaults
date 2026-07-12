@@ -1,0 +1,7 @@
+# Enable Bluetooth Hardware and Controller
+CONFIG_BT_ENABLED=y
+CONFIG_BT_CONTROLLER_ENABLED=y
+CONFIG_BTDM_CTRL_MODE_BLE_ONLY=y
+
+# Enable NimBLE Stack (instead of Bluedroid)
+CONFIG_BT_NIMBLE_ENABLED=y
