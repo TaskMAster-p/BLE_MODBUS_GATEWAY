@@ -2,8 +2,7 @@
 
 
 uint8_t datoms_count=0;
-// uint16_t holding_registers[MAX_ACTIVE_DEVICES * REG_PER_DEVICE];
-// datoms_device_t datoms_devices[MAX_ACTIVE_DEVICES];
+
 /*----------------------------------------------------------
  * Check whether MAC already belongs to a Datoms device
  *---------------------------------------------------------*/
