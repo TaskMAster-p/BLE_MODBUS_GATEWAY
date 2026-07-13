@@ -6,65 +6,28 @@ The gateway continuously scans Bluetooth Low Energy (BLE) advertisement packets 
 
 Unlike traditional BLE gateways that require a BLE connection, this project operates entirely in **Observer Mode**, making it capable of receiving telemetry from multiple BLE sensors simultaneously with minimal latency and power consumption.
 
----
-
-# Table of Contents
-
-- Introduction
-- Project Objective
-- Features
-- Technologies Used
-- Supported Sensors
-- System Overview
-- BLE Advertisement Processing
-- Software Architecture
-- Firmware Workflow
-- Dynamic Device Discovery
-- Packet Parsing
-- FreeRTOS Queue
-- Holding Registers
-- Modbus RTU Communication
-- Project Structure
-- Results
-- Future Improvements
-
----
 
 # Introduction
 
 ## ESP32
 
-The ESP32 is a low-power, dual-core System-on-Chip (SoC) developed by Espressif Systems for embedded and IoT applications.
-
-Some of its major features include:
-
-- Dual-core Xtensa LX6 Processor
-- Bluetooth Low Energy (BLE)
-- Wi-Fi
-- UART, SPI, I2C
-- GPIO
-- FreeRTOS Support
-- Hardware Timers
-- DMA
-- Low Power Modes
-
-Its integrated BLE controller and dual-core architecture make it an ideal platform for implementing industrial BLE gateways.
+The **ESP32** is a low-power System-on-Chip (SoC) developed by **Espressif Systems** for IoT and embedded applications.
+Its integrated BLE controller and low-power operation make it an ideal platform for developing BLE gateways capable of receiving telemetry from battery-powered wireless sensors.
 
 ---
 
 ## ESP-IDF
 
-ESP-IDF (Espressif IoT Development Framework) is the official software development framework for ESP32 devices.
+The **Espressif IoT Development Framework (ESP-IDF)** is the official software development framework for ESP32 devices.
+This project uses the **NimBLE Host Stack** provided by ESP-IDF for BLE scanning and advertisement parsing.
 
-This project makes use of:
+### Useful Documentation
 
-- NimBLE Host Stack
-- FreeRTOS
-- UART Driver
-- GPIO Driver
-- Bluetooth Controller
-- NVS Flash
-- Logging Library (ESP_LOG)
+- ESP-IDF Programming Guide  
+  https://docs.espressif.com/projects/esp-idf/en/stable/esp32/
+
+- NimBLE Programming Guide  
+  https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/bluetooth/nimble/index.html
 
 ---
 
@@ -75,13 +38,9 @@ The objective of this project is to develop an industrial gateway capable of con
 The gateway performs the following operations:
 
 - Continuously scans BLE advertisements.
-- Detects supported Datoms BLE sensors.
-- Extracts the Slave ID from the sensor name advertisement.
-- Maintains a MAC Address ↔ Slave ID mapping.
+- Extracts the Slave ID and maintains a MAC Address.
 - Parses telemetry advertisements.
-- Extracts sensor parameters.
-- Transfers decoded telemetry through a FreeRTOS Queue.
-- Updates Modbus Holding Registers.
+- Transfers decoded telemetry through a FreeRTOS Queue updating holding registers.
 - Responds to Modbus RTU Function Code 03 requests over RS485.
 
 The gateway does **not** establish a BLE connection with any sensor.
@@ -90,46 +49,6 @@ Instead, it passively receives advertisement packets and converts them into Modb
 
 ---
 
-# Features
-
-## BLE Features
-
-- Passive BLE Advertisement Scanning
-- Connectionless BLE Communication
-- Multiple Sensor Support
-- Dynamic Device Discovery
-- MAC Address Based Device Identification
-- Automatic Slave ID Detection
-- Continuous Background Scanning
-
----
-
-## Gateway Features
-
-- BLE → Modbus RTU Conversion
-- Dynamic Holding Register Allocation
-- Automatic Register Updates
-- FreeRTOS Queue Based Communication
-- RS485 Communication
-- Modbus RTU Slave
-- CRC Validation
-- UART Based Communication
-- Modular Software Architecture
-
----
-
-## Software Features
-
-- ESP-IDF Framework
-- NimBLE Host Stack
-- FreeRTOS
-- Multi-Core Task Execution
-- Modular Design
-- SOLID-Inspired Architecture
-- Easy Sensor Integration
-- Easily Extendable
-
----
 
 # Technologies Used
 
@@ -496,33 +415,6 @@ FreeRTOS Queue
 
 ---
 
-# Why Two Advertisements?
-
-Separating the Name Advertisement from the Telemetry Advertisement provides several advantages.
-
-- The Slave ID is transmitted only when required.
-- Telemetry packets remain compact.
-- BLE advertisement size remains within protocol limits.
-- Sensor identity and telemetry remain independent.
-- Additional telemetry fields can be added without changing the naming scheme.
-
-The gateway combines both advertisements using the common BLE MAC Address, ensuring that each telemetry packet is associated with the correct Modbus Slave ID.
-
----
-
-# Packet Validation
-
-Before processing any advertisement, the gateway performs several checks.
-
-- Advertisement Length
-- Advertisement Type
-- Datoms Name Prefix
-- Supported Service UUID
-- Supported Packet Format
-- Known Device Lookup
-- Packet Length Validation
-
-Only valid advertisements are forwarded for telemetry decoding.
 
 <!-- Part 3 -->
 
@@ -543,149 +435,22 @@ main
 │
 ├── include
 │   ├── common.h
-│   ├── scan.h
 │   ├── gap.h
-│   ├── parser.h
-│   ├── registers.h
 │   └── modbus.h
 │
 ├── src
-│   ├── main.c
 │   ├── common.c
-│   ├── scan.c
-│   ├── gap.c
 │   ├── parser.c
 │   ├── registers.c
 │   └── modbus.c
 │
 ├── CMakeLists.txt
 │
-└── README.md
+└── main.c
 ```
 
 ---
 
-# Module Responsibilities
-
-## main.c
-
-Responsible for:
-
-- Application Entry Point
-- NVS Initialization
-- Bluetooth Controller Initialization
-- NimBLE Host Initialization
-- UART Initialization
-- Queue Creation
-- FreeRTOS Task Creation
-
----
-
-## scan.c
-
-Responsible for:
-
-- BLE Scan Configuration
-- Scan Parameters
-- Starting BLE Scan
-- Restarting Scan
-
----
-
-## gap.c
-
-Responsible for:
-
-- GAP Event Callback
-- Receiving Advertisement Packets
-- Detecting Datoms Devices
-- Passing Advertisements to the Parser
-
----
-
-## parser.c
-
-Responsible for:
-
-- Parsing Name Advertisements
-- Parsing Telemetry Advertisements
-- Extracting Slave ID
-- Extracting Temperature
-- Extracting Humidity
-- Extracting Door Status
-- Extracting Battery Voltage
-- Creating sensor_packet_t
-- Sending Data to Queue
-
----
-
-## registers.c
-
-Responsible for:
-
-- Dynamic Register Allocation
-- Holding Register Updates
-- Register Lookup
-- Register Printing
-- Device Table Management
-
----
-
-## modbus.c
-
-Responsible for:
-
-- UART Reception
-- CRC Verification
-- Modbus Request Processing
-- Building RTU Response
-- UART Transmission
-
----
-
-## common.c
-
-Responsible for:
-
-- Utility Functions
-- Hex Dump
-- MAC Printing
-- Common Helper Functions
-
----
-
-# Overall Software Architecture
-
-```
-                    +----------------+
-                    |    main.c      |
-                    +-------+--------+
-                            |
-        +-------------------+-------------------+
-        |                   |                   |
-        ▼                   ▼                   ▼
-    scan.c              modbus.c           common.c
-        │
-        ▼
-    gap.c
-        │
-        ▼
-   parser.c
-        │
-        ▼
- FreeRTOS Queue
-        │
-        ▼
- registers.c
-        │
-        ▼
- Holding Registers
-        │
-        ▼
-   Modbus Response
-```
-
----
 
 # Multi-Core Architecture
 
@@ -724,50 +489,6 @@ Running BLE and Modbus on separate cores prevents UART communication from blocki
 
 ---
 
-# Firmware Workflow
-
-After power-up, the firmware executes the following sequence.
-
-```
-Power ON
-
-↓
-
-app_main()
-
-↓
-
-Initialize NVS
-
-↓
-
-Initialize Bluetooth Controller
-
-↓
-
-Initialize NimBLE
-
-↓
-
-Initialize UART
-
-↓
-
-Create Queue
-
-↓
-
-Create Modbus Task
-
-↓
-
-Start BLE Scan
-```
-
-After initialization, the firmware continuously waits for BLE advertisements and Modbus requests.
-
----
-
 # Complete Data Flow
 
 The following diagram illustrates the complete gateway workflow.
@@ -797,7 +518,7 @@ Extract Telemetry
 
 ↓
 
-sensor_packet_t
+sensor_packet_t (structure)
 
 ↓
 
@@ -878,77 +599,6 @@ This architecture allows BLE advertisements to continue being received even whil
 
 ---
 
-# Common Sensor Packet
-
-After decoding a BLE advertisement, both supported sensor types are converted into a common internal representation.
-
-```c
-typedef struct
-{
-    uint8_t slave_id;
-
-    uint16_t temperature;
-
-    uint16_t humidity_or_door;
-
-    uint16_t battery_mv;
-
-    int8_t rssi;
-
-} sensor_packet_t;
-```
-
-The queue transfers this structure from the BLE task to the Modbus task.
-
-Using a common packet format allows new BLE sensors to be integrated without modifying the Holding Register or Modbus implementations.
-
----
-
-# Inter-Module Communication
-
-The modules communicate using well-defined interfaces.
-
-```
-main.c
-
-↓
-
-scan.c
-
-↓
-
-gap.c
-
-↓
-
-parser.c
-
-↓
-
-sensor_packet_t
-
-↓
-
-FreeRTOS Queue
-
-↓
-
-registers.c
-
-↓
-
-holding_registers[]
-
-↓
-
-modbus.c
-
-↓
-
-UART Driver
-```
-
-Each module performs one specific task, reducing coupling between software components and making the firmware easier to maintain and extend.
 
 <!-- Part 4 -->
 
@@ -973,9 +623,7 @@ Example
 
 ```
 Datoms_1
-
 Datoms_2
-
 Datoms_54
 ```
 
@@ -1020,7 +668,6 @@ The gateway maintains an internal table containing every discovered sensor.
 typedef struct
 {
     uint8_t mac[6];
-
     uint8_t slave_id;
 
 } datoms_device_t;
@@ -1048,19 +695,11 @@ Instead,
 
 ```
 Name Advertisement
-
 ↓
-
 Datoms_2
-
 ↓
-
-Store
-
-MAC
-
+Store MAC
 ↓
-
 Slave ID
 ```
 
@@ -1068,17 +707,11 @@ Later,
 
 ```
 Telemetry Advertisement
-
 ↓
-
 Extract MAC
-
 ↓
-
 Lookup Device Table
-
 ↓
-
 Retrieve Slave ID
 ```
 
@@ -1086,47 +719,7 @@ This avoids transmitting the sensor name inside every telemetry advertisement an
 
 ---
 
-# Telemetry Advertisement
 
-Telemetry advertisements contain the actual sensor measurements.
-
-For example,
-
-### T-SENSE
-
-- Temperature
-- Door Status
-- Battery Voltage
-- RSSI
-
-### T-ONE
-
-- Temperature
-- Humidity
-- Battery Voltage
-- RSSI
-
-The parser identifies the packet format, extracts the required fields and creates a common sensor packet.
-
-```c
-typedef struct
-{
-    uint8_t slave_id;
-
-    uint16_t temperature;
-
-    uint16_t humidity_or_door;
-
-    uint16_t battery_mv;
-
-    int8_t rssi;
-
-} sensor_packet_t;
-```
-
-The Slave ID is retrieved from the device table using the BLE MAC Address.
-
----
 
 # Queue Processing
 
@@ -1192,214 +785,12 @@ Each sensor occupies **five consecutive registers**.
 
 ---
 
-# Holding Register Layout
 
-```
-Registers
 
-+-----+---------+
-| R0  | SlaveID |
-+-----+---------+
-| R1  | Temp    |
-+-----+---------+
-| R2  | Hum/Door|
-+-----+---------+
-| R3  | Battery |
-+-----+---------+
-| R4  | RSSI    |
-+-----+---------+
 
-+-----+---------+
-| R5  | SlaveID |
-+-----+---------+
-| R6  | Temp    |
-+-----+---------+
-| R7  | Hum/Door|
-+-----+---------+
-| R8  | Battery |
-+-----+---------+
-| R9  | RSSI    |
-+-----+---------+
-```
 
-Every newly discovered sensor occupies one complete block of five registers.
 
----
 
-# Dynamic Register Allocation
-
-Holding Registers are allocated dynamically.
-
-Whenever telemetry is received,
-
-```
-Receive sensor_packet_t
-
-↓
-
-Find Slave ID
-
-↓
-
-Already Exists ?
-
-      │
- ┌────┴─────┐
- │          │
-YES        NO
- │          │
- ▼          ▼
-
-Update    Allocate
-Existing  Next Free Block
-
-↓
-
-Update Telemetry
-
-↓
-
-Return
-```
-
-This mechanism ensures that
-
-- Existing sensors update their current register values.
-- Newly discovered sensors automatically receive the next available register block.
-- Duplicate register entries are avoided.
-
----
-
-# Register Update Algorithm
-
-The register update process follows the algorithm shown below.
-
-```
-Receive Sensor Packet
-
-↓
-
-Search Holding Registers
-
-↓
-
-Slave Found ?
-
-     │
- ┌───┴────┐
- │        │
-YES      NO
- │        │
- ▼        ▼
-
-Update   Find Empty Block
-
-            │
-
-            ▼
-
-     Store Slave ID
-
-            │
-
-            ▼
-
-Update Temperature
-
-↓
-
-Update Humidity / Door Status
-
-↓
-
-Update Battery Voltage
-
-↓
-
-Update RSSI
-```
-
----
-
-# Example
-
-Suppose two sensors are discovered.
-
-```
-Datoms_1
-
-↓
-
-Temperature = 26.30°C
-
-Humidity = 51%
-
-Battery = 3000 mV
-
-RSSI = -71
-```
-
-```
-Datoms_2
-
-↓
-
-Temperature = 24.22°C
-
-Door = OPEN
-
-Battery = 3093 mV
-
-RSSI = -46
-```
-
-The Holding Registers become
-
-```
-================================================
-
-Slave 1
-
-Temp      : 0x0A46
-
-Hum/Door  : 0x0033
-
-Battery   : 0x0BB8
-
-RSSI      : 0xFFB9
-
-------------------------------------------------
-
-Slave 2
-
-Temp      : 0x0976
-
-Hum/Door  : 0x0001
-
-Battery   : 0x0C15
-
-RSSI      : 0xFFD2
-
-================================================
-```
-
-These registers are continuously updated whenever new BLE telemetry is received and are subsequently served to Modbus RTU Masters upon request.
-
----
-
-# Advantages of the Design
-
-The implemented architecture provides several advantages.
-
-- Dynamic BLE sensor discovery
-- No hardcoded Slave IDs
-- Automatic MAC ↔ Slave ID association
-- Dynamic Holding Register allocation
-- Efficient memory utilization
-- Queue-based task synchronization
-- Easy integration of additional BLE sensors
-- Minimal coupling between BLE and Modbus modules
-- Scalable architecture suitable for industrial deployments
 
 <!-- Part 5 -->
 
@@ -1536,43 +927,8 @@ This prevents corrupted UART frames from affecting the Holding Registers.
 
 ---
 
-# CRC Verification
 
-The gateway verifies every received Modbus request before processing it.
 
-```
-Received Frame
-
-↓
-
-Extract Received CRC
-
-↓
-
-Calculate CRC
-
-↓
-
-Compare
-
-↓
-
-Match ?
-
-     │
- ┌───┴────┐
- │        │
-YES      NO
- │        │
- ▼        ▼
-
-Process   Ignore Frame
-Request
-```
-
-Only requests with a valid CRC are accepted.
-
----
 
 # Function Code Processing
 
@@ -1702,31 +1058,7 @@ FF D2
 RSSI
 ```
 
----
 
-# Response Flow
-
-```
-Holding Registers
-
-↓
-
-Copy Requested Registers
-
-↓
-
-Create Response Frame
-
-↓
-
-Append CRC
-
-↓
-
-UART TX
-```
-
-The Modbus Master receives the latest BLE telemetry exactly as standard Holding Registers.
 
 ---
 
@@ -1859,23 +1191,6 @@ Decoded as
 | R3 | 0x0C15 | Battery Voltage |
 | R4 | 0xFFD2 | RSSI |
 
----
-
-# Error Handling
-
-The Modbus subsystem handles the following conditions.
-
-- Invalid UART Frame
-- Invalid Frame Length
-- CRC Failure
-- Unsupported Function Code
-- Unknown Slave ID
-- Invalid Register Address
-- Register Range Overflow
-
-Whenever an invalid request is detected, the gateway safely ignores the request without affecting BLE scanning or Holding Register updates.
-
----
 
 # Advantages of the Implementation
 
@@ -1892,130 +1207,6 @@ The implemented Modbus RTU subsystem provides
 
 <!-- Part 6 -->
 
-
-
-# Source Code Organization
-
-The firmware has been organized into independent software modules following a modular design approach.
-
-Each module is responsible for a single functionality and communicates with other modules through clearly defined interfaces.
-
-```
-ble_modbus_gateway
-
-│
-
-├── include
-
-│   ├── common.h
-
-│   ├── scan.h
-
-│   ├── gap.h
-
-│   ├── parser.h
-
-│   ├── registers.h
-
-│   └── modbus.h
-
-│
-
-├── src
-
-│   ├── main.c
-
-│   ├── common.c
-
-│   ├── scan.c
-
-│   ├── gap.c
-
-│   ├── parser.c
-
-│   ├── registers.c
-
-│   └── modbus.c
-
-│
-
-├── README.md
-
-└── CMakeLists.txt
-```
-
----
-
-# Module Description
-
-| Module | Responsibility |
-|---------|----------------|
-| **main.c** | System Initialization, Queue Creation, Task Creation |
-| **scan.c** | BLE Scan Configuration |
-| **gap.c** | GAP Event Callback |
-| **parser.c** | Advertisement Parsing and Telemetry Extraction |
-| **registers.c** | Device Table and Holding Register Management |
-| **modbus.c** | UART Communication and Modbus RTU Slave |
-| **common.c** | Common Utility Functions |
-
----
-
-# Design Decisions
-
-## Why BLE Advertisements Instead of GATT?
-
-The supported TopFly sensors continuously broadcast telemetry through BLE advertisements.
-
-Using advertisement scanning offers several advantages.
-
-- No BLE connection establishment.
-- Faster telemetry acquisition.
-- Multiple sensors can be monitored simultaneously.
-- Lower processor utilization.
-- Lower power consumption.
-
-Therefore, the gateway operates entirely as a BLE Observer.
-
----
-
-## Why Use MAC Address for Identification?
-
-Each sensor transmits two advertisements.
-
-The Name Advertisement contains
-
-```
-Datoms_<SlaveID>
-```
-
-whereas the Telemetry Advertisement contains only sensor measurements.
-
-Since both advertisements originate from the same BLE MAC Address, the gateway stores
-
-```
-MAC Address
-
-↓
-
-Slave ID
-```
-
-This mapping allows telemetry packets to be associated with the correct Modbus Slave ID.
-
----
-
-## Why Dynamic Register Allocation?
-
-Instead of assigning fixed Holding Registers to predefined Slave IDs, the gateway dynamically allocates register blocks.
-
-Benefits include
-
-- No firmware modifications when adding sensors.
-- Efficient use of Holding Registers.
-- Automatic sensor discovery.
-- Runtime scalability.
-
----
 
 ## Why Use a Queue?
 
@@ -2059,30 +1250,7 @@ Core 1
 
 This separation improves responsiveness and prevents UART communication from delaying BLE packet reception.
 
----
 
-# Testing
-
-The gateway was tested using
-
-- TopFly Tech T-SENSE
-- TopFly Tech T-ONE
-- Modbus Poll
-- USB to RS485 Converter
-
-Successful verification included
-
-- BLE Advertisement Reception
-- Name Advertisement Parsing
-- Telemetry Parsing
-- MAC ↔ Slave ID Mapping
-- Queue Transfer
-- Holding Register Updates
-- Function Code 03 Requests
-- CRC Validation
-- UART Communication
-
----
 
 # Sample Holding Registers
 
@@ -2146,80 +1314,7 @@ CRC
 
 The response was successfully decoded by Modbus Poll.
 
----
 
-# Current Features
-
-✔ BLE Advertisement Scanner
-
-✔ Dynamic Device Discovery
-
-✔ Dynamic Slave ID Assignment
-
-✔ MAC Address Mapping
-
-✔ TopFly T-SENSE Support
-
-✔ TopFly T-ONE Support
-
-✔ Queue Based Processing
-
-✔ Dynamic Holding Registers
-
-✔ Modbus RTU Slave
-
-✔ CRC Validation
-
-✔ UART over RS485
-
-✔ Function Code 03
-
----
-
-# Future Improvements
-
-The current implementation can be extended to support additional industrial features.
-
-Planned improvements include
-
-- Function Code 04 (Read Input Registers)
-- Function Code 06 (Write Single Register)
-- Function Code 16 (Write Multiple Registers)
-- BLE Device Whitelisting
-- Sensor Timeout Detection
-- Non-Volatile Device Storage
-- Configurable Register Mapping
-- OTA Firmware Updates
-- MQTT Gateway Support
-- Wi-Fi Connectivity
-- Web Configuration Interface
-- BLE Configuration Mode
-- Additional BLE Sensor Support
-
----
-
-# Lessons Learned
-
-The development of this gateway provided practical experience with
-
-- ESP-IDF Development
-- BLE GAP Advertisement Scanning
-- NimBLE Host Stack
-- BLE Advertisement Parsing
-- Connectionless BLE Communication
-- Dynamic Device Discovery
-- FreeRTOS
-- Producer–Consumer Architecture
-- Queue Based Inter-Task Communication
-- Multi-Core Programming
-- UART Driver
-- RS485 Communication
-- Modbus RTU Protocol
-- CRC Generation and Verification
-- Holding Register Management
-- Modular Embedded Software Design
-
----
 
 # Conclusion
 
