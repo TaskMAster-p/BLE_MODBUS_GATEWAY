@@ -2,6 +2,9 @@
 # Build output
 build/
 
+# Results
+results/
+
 # VS Code
 .vscode/
 
